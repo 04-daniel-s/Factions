@@ -1,0 +1,14 @@
+main: de.lecuutex.factions.Factions
+version: 1.0
+name: Factions
+api-version: 1.16
+depend:
+
+commands:
+  skill:
+  faction:
+    aliases: [f,factions]
+  backpack:
+    aliases: bp
+  raid:
+  spawn:
