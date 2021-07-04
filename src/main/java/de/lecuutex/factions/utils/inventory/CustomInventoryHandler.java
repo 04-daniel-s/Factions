@@ -10,5 +10,4 @@ import java.util.HashMap;
 @Setter
 public class CustomInventoryHandler implements Listener {
     private HashMap<String, CustomInventory> customInventories = new HashMap<>();
-
 }

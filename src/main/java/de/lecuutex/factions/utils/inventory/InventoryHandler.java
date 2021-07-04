@@ -15,6 +15,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 
 public class InventoryHandler {
+
     private final FactionHandler factionHandler = Factions.getInstance().getFactionHandler();
     //TODO: Beschreibung zu allen Items
 

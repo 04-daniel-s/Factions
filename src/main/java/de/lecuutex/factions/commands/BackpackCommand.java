@@ -12,6 +12,7 @@ public class BackpackCommand implements CommandExecutor {
     public boolean onCommand(CommandSender sender, Command command, String s, String[] args) {
         Player player = (Player) sender;
 
+        //TODO: Rechte abfragen
         Factions.getInstance().registerBackpack(player, 3 * 9);
         player.openInventory(Factions.getInstance().getInventoryHandler().getBackpack(player));
         return true;

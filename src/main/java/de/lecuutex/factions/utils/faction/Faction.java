@@ -22,7 +22,7 @@ public class Faction {
     private int protectionTime;
     private int raidEnergy;
     private int money;
-    private int level; // erweitert slots
+    private int level; //TODO: erweitert slots
     private int slots;
 
     public Faction(String id, String name, String creator, ArrayList<FactionPlayer> member, ArrayList<FactionRank> ranks, ArrayList<String> raidedBy, HashMap<String,Location> homes, int elo, int expMultiplier, int protectionTime, int raidEnergy, int money, int level, int slots) {

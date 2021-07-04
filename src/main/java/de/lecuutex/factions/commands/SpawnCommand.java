@@ -9,14 +9,17 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 public class SpawnCommand implements CommandExecutor {
+
     private final RaidHandler raidHandler = Factions.getInstance().getRaidHandler();
+
     private final FactionHandler factionHandler = Factions.getInstance().getFactionHandler();
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args[0].equalsIgnoreCase("spawn")) {
             Player player = (Player) sender;
-            if (raidHandler.getRaids().containsKey(factionHandler.getFactionByPlayer(player).getId())) {
+
+            if (raidHandler.getRaids().containsKey(factionHandler.getFactionByPlayer(player).getId()) && raidHandler.getRaids().get(factionHandler.getFactionByPlayer(player).getId()).getPlayers().contains(player.getName())) {
                 player.sendMessage(Factions.getInstance().getPrefix()+ "Diesen Befehl kannst du im Raid nicht benutzen!");
                 return true;
             }

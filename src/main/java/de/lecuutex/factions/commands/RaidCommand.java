@@ -19,8 +19,11 @@ import java.util.Map;
 import java.util.Random;
 
 public class RaidCommand implements CommandExecutor {
+
     private final FactionHandler factionHandler = Factions.getInstance().getFactionHandler();
+
     private final RaidHandler raidHandler = Factions.getInstance().getRaidHandler();
+
     private final String prefix = Factions.getInstance().getPrefix();
 
     @Override

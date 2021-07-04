@@ -11,7 +11,6 @@ public class SkillCommand implements CommandExecutor {
     public boolean onCommand(CommandSender sender, Command command, String s, String[] args) {
         Player player = (Player) sender;
         player.openInventory(Factions.getInstance().getInventoryHandler().getSkillInventory(player));
-
         return true;
     }
 }

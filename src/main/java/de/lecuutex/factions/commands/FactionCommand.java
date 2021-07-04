@@ -29,10 +29,15 @@ import java.util.UUID;
 
 @Getter
 public class FactionCommand implements CommandExecutor {
+
     private final String prefix = Factions.getInstance().getPrefix();
+
     private final String insufficientPerms = prefix + "Dazu hast du keine Rechte!";
+
     private final FactionHandler factionHandler = Factions.getInstance().getFactionHandler();
+
     private final RaidHandler raidHandler = Factions.getInstance().getRaidHandler();
+
     private final FactionConfig config = Factions.getInstance().getFactionConfig();
 
     //TODO Namefarbe der Rangfarbe anpassen bspw. beim Einladen
@@ -218,19 +223,20 @@ public class FactionCommand implements CommandExecutor {
                         player.sendMessage(insufficientPerms);
                         return true;
                     }
-
+                    if(faction.getSlots() <= faction.getMember().size()) {
+                        player.sendMessage(prefix + "Deine Faction ist voll!");
+                        return true;
+                    }
                     if (!Bukkit.getOnlinePlayers().contains(Bukkit.getPlayer(args[1]))) {
-                        player.sendMessage(prefix + "§cDieser Spieler ist nicht online!");
+                        player.sendMessage(prefix + "Dieser Spieler ist nicht online!");
                         return true;
                     }
-
                     if (factionHandler.getFactionInvites().containsKey(Bukkit.getPlayer(args[1]).getName())) {
-                        player.sendMessage(prefix + "§cDieser Spieler hat eine ausstehende Einladung.");
+                        player.sendMessage(prefix + "Dieser Spieler hat eine ausstehende Einladung.");
                         return true;
                     }
-
                     if (factionHandler.getFactionByPlayer(Bukkit.getPlayer(args[1])) != null) {
-                        player.sendMessage(prefix + "§cDer Spieler ist bereits in einer Faction!");
+                        player.sendMessage(prefix + "Der Spieler ist bereits in einer Faction!");
                         return true;
                     }
 

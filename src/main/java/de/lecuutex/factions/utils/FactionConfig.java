@@ -14,6 +14,7 @@ import java.io.IOException;
 public class FactionConfig {
 
     private File file = new File("plugins/Factions/factionsConfig.yml");
+
     private YamlConfiguration configuration = YamlConfiguration.loadConfiguration(file);
 
     public FactionConfig() {
