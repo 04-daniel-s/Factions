@@ -14,6 +14,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 
+import java.util.UUID;
+import java.util.stream.Collectors;
+
 public class InventoryHandler {
 
     private final FactionHandler factionHandler = Factions.getInstance().getFactionHandler();
@@ -30,7 +33,7 @@ public class InventoryHandler {
         if (bp.getSkillpoints() > 0)
             inventory.setItem(0, new ItemBuilder(Material.WRITABLE_BOOK).setDisplayName("§e§lSkillpoints").setAmount(bp.getSkillpoints()).build());
         //TODO: Fortschrittbalken fehlt
-        inventory.setItem(8, new ItemBuilder(Material.PLAYER_HEAD).setDisplayName("§a" + p.getName() + "'s Stats").setSkullOwner(p).setLore("§7Nächstes Level: §d" + (Factions.getInstance().getBasePlayerHandler().getLevels().get(bp.getLevel()) - bp.getExp()) + " §dXP", "", "§7Attack Damage: §6" + bp.getAttackDamage() + " §7(§e" + bp.getAttackDamage() * Factions.getInstance().getBasePlayerHandler().getAttackDamageUpgrade() + "§e% §7Damage)", "§7Attack Speed: §6" + bp.getAttackSpeed() + " §7(§e" + bp.getAttackSpeed() * Factions.getInstance().getBasePlayerHandler().getAttackSpeedUpgrade() + "§e% §7Attack Speed)", "§7Movement Speed: §6" + bp.getMovementSpeed() + " §7(§e"+ bp.getMovementSpeed() * Factions.getInstance().getBasePlayerHandler().getMovementSpeedUpgrade() + "§e% §7Movement Speed)", "§7Health: §6" + bp.getHealth() + " §7(§e" + bp.getHealth() * Factions.getInstance().getBasePlayerHandler().getHealthUpgrade() + "§e% §7Health)", "§7Armor: §6" + bp.getArmor() + " §7(§e" + bp.getArmor() * Factions.getInstance().getBasePlayerHandler().getArmorUpgrade() + "§e% §7Armor)").build());
+        inventory.setItem(8, new ItemBuilder(Material.PLAYER_HEAD).setDisplayName("§a" + p.getName() + "'s Stats").setSkullOwner(p).setLore("§7Nächstes Level: §d" + (Factions.getInstance().getBasePlayerHandler().getLevels().get(bp.getLevel()) - bp.getExp()) + " §dXP", "", "§7Attack Damage: §6" + bp.getAttackDamage() + " §7(§e" + bp.getAttackDamage() * Factions.getInstance().getBasePlayerHandler().getAttackDamageUpgrade() + "§e% §7Damage)", "§7Attack Speed: §6" + bp.getAttackSpeed() + " §7(§e" + bp.getAttackSpeed() * Factions.getInstance().getBasePlayerHandler().getAttackSpeedUpgrade() + "§e% §7Attack Speed)", "§7Movement Speed: §6" + bp.getMovementSpeed() + " §7(§e" + bp.getMovementSpeed() * Factions.getInstance().getBasePlayerHandler().getMovementSpeedUpgrade() + "§e% §7Movement Speed)", "§7Health: §6" + bp.getHealth() + " §7(§e" + bp.getHealth() * Factions.getInstance().getBasePlayerHandler().getHealthUpgrade() + "§e% §7Health)", "§7Armor: §6" + bp.getArmor() + " §7(§e" + bp.getArmor() * Factions.getInstance().getBasePlayerHandler().getArmorUpgrade() + "§e% §7Armor)").build());
 
         inventory.setItem(10, new ItemBuilder(Material.BARRIER).setDisplayName("§4Attack Damage").setLore("§c§lClick to unlock").build());
         inventory.setItem(11, new ItemBuilder(Material.BARRIER).setDisplayName("§4Attack Speed").setLore("§c§lClick to unlock").build());
@@ -224,7 +227,7 @@ public class InventoryHandler {
         CustomInventory customInventory = new CustomInventory(9, "§cRänge");
         fillCustomInventory(customInventory);
 
-        customInventory.setItem(1, new ItemBuilder(Material.RED_CONCRETE).setDisplayName("§cLeader").build(), player -> player.openInventory(getFactionSettings(Factions.getInstance().getFactionHandler().getRankByPlayer(Bukkit.getPlayer(faction.getCreator())))));
+        customInventory.setItem(1, new ItemBuilder(Material.RED_CONCRETE).setDisplayName("§cLeader").build(), player -> player.openInventory(getFactionSettings(faction.getRanks().stream().filter(v -> v.getId() == 0).findFirst().get())));
         customInventory.setItem(2, new ItemBuilder(Material.BLUE_CONCRETE).setDisplayName("§9Offizier").build(), player -> player.openInventory(getFactionSettings(faction.getRanks().stream().filter(v -> v.getId() == 1).findFirst().get())));
         customInventory.setItem(3, new ItemBuilder(Material.GREEN_CONCRETE).setDisplayName("§2Mitglied").build(), player -> player.openInventory(getFactionSettings(faction.getRanks().stream().filter(v -> v.getId() == 2).findFirst().get())));
         customInventory.setItem(4, new ItemBuilder(Material.LIME_CONCRETE).setDisplayName("§aTest-Mitglied").build(), player -> player.openInventory(getFactionSettings(faction.getRanks().stream().filter(v -> v.getId() == 3).findFirst().get())));
@@ -278,14 +281,14 @@ public class InventoryHandler {
         CustomInventory customInventory = new CustomInventory(27, "§cFaction");
         fillCustomInventory(customInventory);
 
-        String[] lore = {"§aLeader: §e" + Bukkit.getPlayer(f.getCreator()).getName(), " ", "§aElo: §e" + f.getElo(), "§aBonus XP: §e* " + (f.getExpMultiplier() + 1), " ", "§aGeld: §e" + f.getMoney(), "§aLevel: §e" + f.getLevel(), "§aSlots: §e" + f.getSlots()};
+        String[] lore = {"§aLeader: §e" + Bukkit.getPlayer(UUID.fromString(f.getCreator())).getName(), " ", "§aElo: §e" + f.getElo(), "§aBonus XP: §e* " + (f.getExpMultiplier() + 1), " ", "§aGeld: §e" + f.getMoney(), "§aLevel: §e" + f.getLevel(), "§aSlots: §e" + f.getSlots()};
 
         customInventory.setItem(4, new ItemBuilder(Material.TORCH).setDisplayName("§aHilfe").setLore("§7Weitere Commands:", "§7/f help").build(), player -> {
             player.performCommand("/f help");
             player.closeInventory();
         });
 
-        customInventory.setItem(9, new ItemBuilder(Material.PLAYER_HEAD).setSkullOwner(Bukkit.getPlayer(f.getCreator())).setLore(lore).setDisplayName("§c" + f.getName()).build(), player -> {
+        customInventory.setItem(9, new ItemBuilder(Material.PLAYER_HEAD).setSkullOwner(Bukkit.getPlayer(UUID.fromString(f.getCreator()))).setLore(lore).setDisplayName("§c" + f.getName()).build(), player -> {
         });
         customInventory.setItem(3 + 9, new ItemBuilder(Material.BOOK).setDisplayName("§7Ränge").build(), player -> player.openInventory(getRanks(f)));
         customInventory.setItem(4 + 9, new ItemBuilder(Material.MAP).setDisplayName("§7Raids").build(), player -> player.openInventory(getRaidLog(f)));

@@ -18,6 +18,8 @@ public class FactionHandler {
 
     private final HashMap<Integer, Integer> factionLevels = new HashMap<>();
 
+    private final int xpBoost = config.getInt("xp-boost");
+
     private final int baseProtectionTime = config.getInt("factionhandler.baseprotectiontime");
 
     private final String factionLocationName = config.getString("factionhandler.factionlocationname");

@@ -30,6 +30,8 @@ import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.WorldCreator;
 import org.bukkit.entity.Player;
+import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import scala.collection.SpecificIterableFactory;
@@ -77,8 +79,6 @@ public class Factions extends JavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
-
-        //TODO: Die Member buggen rum da alle in einer Faction sind
         basePlayerHandler = new BasePlayerHandler();
         factionHandler = new FactionHandler();
         raidHandler = new RaidHandler();
@@ -126,6 +126,8 @@ public class Factions extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new BlockPistonRetractListener(), this);
         Bukkit.getPluginManager().registerEvents(new EntitySpawnListener(), this);
         Bukkit.getPluginManager().registerEvents(new PlayerMoveListener(), this);
+        Bukkit.getPluginManager().registerEvents(new EntityDeathListener(), this);
+        Bukkit.getPluginManager().registerEvents(new PlayerCommandPreprocessListener(), this);
 
         getCommand("skill").setExecutor(new SkillCommand());
         getCommand("faction").setExecutor(new FactionCommand());
@@ -232,17 +234,17 @@ public class Factions extends JavaPlugin {
                 }.getType()));
 
                 HashMap<String, Location> homes = new HashMap<>();
+
                 for (Map.Entry<String, String> entry : homesString.entrySet()) {
                     String[] strings = entry.getValue().split("#");
                     homes.put(entry.getKey(), new Location(Bukkit.getWorld(strings[0]), Double.parseDouble(strings[1]), Double.parseDouble(strings[2]), Double.parseDouble(strings[3])));
                 }
-                factionHandler.getFactions().add(new Faction(id, rs.getString("name"), rs.getString("creator"), new ArrayList<>(factionPlayers.stream().filter(v -> v.getFactionID().equals(id)).collect(Collectors.toList())), factionRanks, raidedBy, homes, rs.getInt("elo"), rs.getInt("expmultiplier"), rs.getInt("protectionTime"), rs.getInt("raidenergy"), rs.getInt("money"), rs.getInt("level"), rs.getInt("slots")));
+                factionHandler.getFactions().add(new Faction(id, rs.getString("name"), rs.getString("creator"), new ArrayList<>(factionPlayers.stream().filter(v -> v.getFactionID().equals(id)).collect(Collectors.toList())), new ArrayList<>(factionRanks.stream().filter(v -> v.getFactionID().equals(id)).collect(Collectors.toList())), raidedBy, homes, rs.getInt("elo"), rs.getInt("expmultiplier"), rs.getInt("protectionTime"), rs.getInt("raidenergy"), rs.getInt("money"), rs.getInt("level"), rs.getInt("slots")));
             }
         } catch (
                 SQLException throwables) {
             throwables.printStackTrace();
         }
-
     }
 
     private void loadBackpacks() {
@@ -505,11 +507,10 @@ public class Factions extends JavaPlugin {
     }
 
     public void addXP(Player player, int xp) {
-        player.getInventory().getItemInMainHand().setAmount(player.getInventory().getItemInMainHand().getAmount() - 1);
-        player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_BOTTLE_THROW, 0.1F, 1);
-
         BasePlayer basePlayer = Factions.getInstance().getBasePlayerHandler().getBasePlayers().get(player.getName());
-        basePlayer.setExp(basePlayer.getExp() + xp);
+
+        int multipliedXP = xp * (basePlayer.getExpMultiplier() + Factions.getInstance().getFactionHandler().getXpBoost() /*TODO: Flag multiplier*/);
+        basePlayer.setExp(basePlayer.getExp() + multipliedXP);
 
         for (int i = 0; i < 10; i++) {
             if (basePlayer.getExp() > Factions.getInstance().getBasePlayerHandler().getLevels().get(basePlayer.getLevel())) {
@@ -522,7 +523,6 @@ public class Factions extends JavaPlugin {
 
         player.setLevel(basePlayer.getLevel());
         player.setExp((float) basePlayer.getExp() / Factions.getInstance().getBasePlayerHandler().getLevels().get(basePlayer.getLevel()));
-        player.sendMessage("§6§l+" + xp + " XP");
     }
 
     private int booleanToInt(Boolean b) {

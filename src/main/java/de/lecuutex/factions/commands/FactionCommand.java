@@ -24,8 +24,10 @@ import org.bukkit.entity.Player;
 import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Getter
 public class FactionCommand implements CommandExecutor {
@@ -52,7 +54,7 @@ public class FactionCommand implements CommandExecutor {
             FactionRank rank = null;
 
             if (faction == null) {
-                if (!args[0].equalsIgnoreCase("create") && !args[0].equalsIgnoreCase("accept")) {
+                if (!args[0].equalsIgnoreCase("create") && !args[0].equalsIgnoreCase("accept") && !args[0].equalsIgnoreCase("help")) {
                     player.sendMessage(prefix + "§cDu bist in keiner Faction.");
                     return true;
                 }
@@ -70,12 +72,12 @@ public class FactionCommand implements CommandExecutor {
                     return true;
                 }
 
-                if(raidHandler.getRaids().entrySet().stream().anyMatch(v -> !v.getValue().getRaidedFaction().equalsIgnoreCase(faction.getId()))) {
+                if (raidHandler.getRaids().entrySet().stream().anyMatch(v -> !v.getValue().getRaidedFaction().equalsIgnoreCase(faction.getId()))) {
                     player.sendMessage(prefix + "Du kannst die Faction während eines Raids nicht löschen!");
                     return true;
                 }
 
-                player.sendMessage(prefix + "§aDu hast die Faction §e" + faction.getName() + " §aerfolgreich gelöscht!");
+                player.sendMessage(prefix + "Du hast die Faction §e" + faction.getName() + " §aerfolgreich gelöscht!");
                 deleteFaction(faction);
 
             } else if (args[0].equalsIgnoreCase("info")) {
@@ -95,7 +97,7 @@ public class FactionCommand implements CommandExecutor {
                 }
 
                 if (faction.getLevel() == factionHandler.getFactionLevels().size()) {
-                    player.sendMessage(prefix + "§cDeine Faction ist auf dem maximalen Level.");
+                    player.sendMessage(prefix + "Deine Faction ist auf dem maximalen Level.");
                     return true;
                 }
 
@@ -103,7 +105,7 @@ public class FactionCommand implements CommandExecutor {
                 int upgradeCost = factionHandler.getFactionLevels().get(faction.getLevel() + 1);
 
                 if (bp.getMoney() < upgradeCost) {
-                    player.sendMessage(prefix + "§cDazu hast du zu wenig Geld!");
+                    player.sendMessage(prefix + "Dazu hast du zu wenig Geld!");
                     return true;
                 }
 
@@ -112,46 +114,44 @@ public class FactionCommand implements CommandExecutor {
                 faction.setSlots(factionHandler.getBaseMemberSize() + faction.getLevel());
 
                 player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1, 1);
-                player.sendMessage(prefix + "§aDu hast die Faction gelevelt. §7[§d" + faction.getLevel() + "§7]");
+                player.sendMessage(prefix + "Du hast die Faction gelevelt. §7[§d" + faction.getLevel() + "§7]");
             }
 
-            if (args.length >= 2) {
+            if (args.length == 1) {
+                if (args[0].equalsIgnoreCase("help")) {
+                    player.sendMessage("");
+                }
+
+            } else if (args.length >= 2) {
                 if (args[0].equalsIgnoreCase("create")) {
                     if (faction != null) {
-                        player.sendMessage(prefix + "§cDu bist bereits in einer Faction");
+                        player.sendMessage(prefix + "Du bist bereits in einer Faction");
                         return true;
                     }
-
                     if (args[1].length() > 10 || args[1].length() < 3) {
-                        player.sendMessage(prefix + "§cDer Name muss mindestens 3 und darf maximal 10 Zeichen lang sein.");
+                        player.sendMessage(prefix + "Der Name muss mindestens 3 und darf maximal 10 Zeichen lang sein.");
                         return true;
                     }
-
                     for (Faction f : factionHandler.getFactions()) {
                         if (f.getName().equalsIgnoreCase(args[1])) {
-                            player.sendMessage(prefix + "§cDieser Name ist nicht verfügbar.");
+                            player.sendMessage(prefix + "Dieser Name ist nicht verfügbar.");
                             return true;
                         }
                     }
 
                     createFaction(args[1], player);
-
                 } else if (args[0].equalsIgnoreCase("kick")) {
+                    if (faction.getMember().stream().noneMatch(v -> v.getName().equalsIgnoreCase(args[1]))) {
+                        player.sendMessage(prefix + "Dieser Spieler ist nicht in deiner Faction.");
+                        return true;
+                    }
                     if ((!rank.isKick() && !faction.getCreator().equalsIgnoreCase(player.getUniqueId().toString())) || faction.getCreator().equalsIgnoreCase(Bukkit.getPlayer(args[1]).getUniqueId().toString())) {
                         player.sendMessage(insufficientPerms);
                         return true;
                     }
-
                     if (player.getName().equalsIgnoreCase(args[1])) {
-                        player.sendMessage(prefix + "§cDu kannst dich nicht selbst rauswerfen.");
+                        player.sendMessage(prefix + "Du kannst dich nicht selbst rauswerfen.");
                         return true;
-                    }
-
-                    for (FactionPlayer factionPlayer : faction.getMember()) {
-                        if (!factionPlayer.getName().equalsIgnoreCase(args[1])) {
-                            player.sendMessage(prefix + "§cDieser Spieler ist nicht in deiner Faction.");
-                            return true;
-                        }
                     }
 
                     faction.getMember().remove(factionHandler.getFactionPlayer(Bukkit.getPlayer(args[1])));
@@ -172,24 +172,22 @@ public class FactionCommand implements CommandExecutor {
                         player.sendMessage(insufficientPerms);
                         return true;
                     }
-
-                    if (currentRank.getId() == 0) {
-                        player.sendMessage(prefix + "§cEr hat bereits den höchsten Rang!");
-                        return true;
-                    }
-
                     for (FactionPlayer factionPlayer : faction.getMember()) {
                         if (!factionPlayer.getName().equalsIgnoreCase(args[1])) {
-                            player.sendMessage(prefix + "§cDieser Spieler ist nicht in deiner Faction.");
+                            player.sendMessage(prefix + "Dieser Spieler ist nicht in deiner Faction.");
                             return true;
                         }
+                    }
+                    if (currentRank.getId() == 0) {
+                        player.sendMessage(prefix + "Er hat bereits den höchsten Rang!");
+                        return true;
                     }
 
                     FactionRank upgradedRank = factionHandler.getRankByID(faction.getId(), currentRank.getId() - 1);
                     currentPlayer.setRank(upgradedRank);
-                    player.sendMessage(prefix + "§aDu hast §e" + Bukkit.getPlayer(args[0]).getName() + " §azu " + upgradedRank.getName() + " §abefördert!");
+                    player.sendMessage(prefix + "Du hast " + Bukkit.getPlayer(args[0]).getName() + " zu " + upgradedRank.getName() + " befördert!");
 
-                    sendFactionMessage(faction, prefix + "§c" + player.getName() + " hat §e" + Bukkit.getPlayer(args[1]).getName() + " §azu " + upgradedRank.getName() + " §abefördert!");
+                    sendFactionMessage(faction, prefix + player.getName() + " hat " + Bukkit.getPlayer(args[1]).getName() + " zu " + upgradedRank.getName() + " befördert!");
 
                 } else if (args[0].equalsIgnoreCase("demote")) {
                     FactionPlayer currentPlayer = factionHandler.getFactionPlayer(Bukkit.getPlayer(args[1]));
@@ -201,7 +199,7 @@ public class FactionCommand implements CommandExecutor {
                     }
 
                     if (currentRank.getId() == 3) {
-                        player.sendMessage(prefix + "§cEr hat bereits den niedrigsten Rang!");
+                        player.sendMessage(prefix + "Er hat bereits den niedrigsten Rang!");
                         return true;
                     }
 
@@ -214,7 +212,7 @@ public class FactionCommand implements CommandExecutor {
 
                     FactionRank upgradedRank = factionHandler.getRankByID(faction.getId(), currentRank.getId() + 1);
                     currentPlayer.setRank(upgradedRank);
-                    player.sendMessage(prefix + "§cDu hast §e" + Bukkit.getPlayer(args[0]).getName() + " §czu " + upgradedRank.getName() + " §cdegradiert!");
+                    player.sendMessage(prefix + "Du hast §e" + Bukkit.getPlayer(args[0]).getName() + " §czu " + upgradedRank.getName() + " degradiert!");
 
                     sendFactionMessage(faction, prefix + "§c" + player.getName() + " hat §e" + Bukkit.getPlayer(args[1]).getName() + " §czu " + upgradedRank.getName() + " §cdegradiert!");
 
@@ -223,7 +221,7 @@ public class FactionCommand implements CommandExecutor {
                         player.sendMessage(insufficientPerms);
                         return true;
                     }
-                    if(faction.getSlots() <= faction.getMember().size()) {
+                    if (faction.getSlots() <= faction.getMember().size()) {
                         player.sendMessage(prefix + "Deine Faction ist voll!");
                         return true;
                     }
@@ -240,35 +238,34 @@ public class FactionCommand implements CommandExecutor {
                         return true;
                     }
 
-                    sendFactionMessage(faction, prefix + "§c" + player.getName() + " §ahat §e" + Bukkit.getPlayer(args[1]).getName() + " §ain die Faction eingeladen!");
+                    sendFactionMessage(faction, prefix + player.getName() + " hat " + Bukkit.getPlayer(args[1]).getName() + " in die Faction eingeladen!");
                     factionHandler.getFactionInvites().put(Bukkit.getPlayer(args[1]).getName(), faction.getName());
 
-                    TextComponent message = new TextComponent(prefix + "§aDu wurdest in die Faction §e" + faction.getName() + " §aeingeladen. \n" + prefix + "§aMöchtest du dieser Faction beitreten? §7[§dBESTÄTIGEN§7]");
+                    TextComponent message = new TextComponent(prefix + "Du wurdest in die Faction §e" + faction.getName() + " eingeladen. \n" + prefix + "Möchtest du dieser Faction beitreten? §7[§dBESTÄTIGEN§7]");
                     message.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/f accept " + faction.getName()));
                     Bukkit.getPlayer(args[1]).spigot().sendMessage(message);
 
                     Bukkit.getScheduler().scheduleSyncDelayedTask(Factions.getInstance(), () -> {
                         factionHandler.getFactionInvites().remove(args[1]);
-                        sendFactionMessage(faction, prefix + "§cDie Einladung an §4" + Bukkit.getPlayer(args[1]).getName() + "§c ist verfallen!");
-                        Bukkit.getPlayer(args[1]).sendMessage(prefix + "§cDie Einladung ist verfallen!");
+                        sendFactionMessage(faction, prefix + "Die Einladung an " + Bukkit.getPlayer(args[1]).getName() + " ist verfallen!");
+                        Bukkit.getPlayer(args[1]).sendMessage(prefix + "Die Einladung ist verfallen!");
                     }, 60 * 20);
 
                 } else if (args[0].equalsIgnoreCase("accept")) {
                     if (!factionHandler.getFactionInvites().containsKey(player.getName())) {
-                        player.sendMessage(prefix + "§cDu hast von dieser Faction keine Einladung!");
+                        player.sendMessage(prefix + "Du hast von dieser Faction keine Einladung!");
                         return true;
                     }
 
                     if (!args[1].equalsIgnoreCase(factionHandler.getFactionInvites().get(player.getName()))) {
-                        player.sendMessage(prefix + "§cDu hast von dieser Faction keine Einladung!");
+                        player.sendMessage(prefix + "Du hast von dieser Faction keine Einladung!");
                         return true;
                     }
 
                     Faction f = factionHandler.getFactionByFactionName(args[1]);
                     f.getMember().add(new FactionPlayer(player.getName(), player.getName(), factionHandler.getRankByID(f.getId(), 3), f.getId()));
-                    sendFactionMessage(f, prefix + "§a" + player.getName() + " ist der Faction beigetreten.");
+                    sendFactionMessage(f, prefix + player.getName() + " ist der Faction beigetreten.");
                 }
-
             }
         }
         return true;
